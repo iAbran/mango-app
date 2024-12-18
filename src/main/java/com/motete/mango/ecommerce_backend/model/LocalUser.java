@@ -1,5 +1,6 @@
 package com.motete.mango.ecommerce_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.*;
@@ -16,6 +17,7 @@ public class LocalUser {
     @Column(nullable = false)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -28,8 +30,12 @@ public class LocalUser {
     @Column(nullable = false)
     private String lastName;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Address> addresses = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER)
+    private List<Address> addresses;
 
     public LocalUser() {}
 
