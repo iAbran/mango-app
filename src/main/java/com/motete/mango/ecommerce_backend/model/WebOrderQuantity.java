@@ -1,9 +1,10 @@
 package com.motete.mango.ecommerce_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "web_order_quantity")
+@Table(name = "web_order_quantities")
 public class WebOrderQuantity {
 
     @Id
@@ -18,6 +19,7 @@ public class WebOrderQuantity {
     @Column(nullable = false)
     private Integer quantity;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "order_id", nullable = false)
     private WebOrder order;

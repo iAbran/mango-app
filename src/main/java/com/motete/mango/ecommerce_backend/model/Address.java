@@ -1,5 +1,6 @@
 package com.motete.mango.ecommerce_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -14,7 +15,6 @@ public class Address {
     @Column(nullable = false)
     private String addressLine1;
 
-    @Column(nullable = false)
     private String addressLine2;
 
     @Column(nullable = false)
@@ -23,9 +23,12 @@ public class Address {
     @Column(nullable = false)
     private String country;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private LocalUser user;
+
+    public Address() {}
 
     public Address(String addressLine1, String addressLine2,
                    String city, String country) {

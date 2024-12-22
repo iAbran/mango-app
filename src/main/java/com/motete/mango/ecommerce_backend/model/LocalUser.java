@@ -31,11 +31,17 @@ public class LocalUser {
     private String lastName;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "user",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE,
+            orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Address> addresses;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id desc")
+    private List<VerificationToken> verificationTokens;
+
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
+
 
     public LocalUser() {}
 
@@ -102,6 +108,22 @@ public class LocalUser {
 
     public void setAddresses(List<Address> addresses) {
         this.addresses = addresses;
+    }
+
+    public List<VerificationToken> getVerificationTokens() {
+        return verificationTokens;
+    }
+
+    public void setVerificationTokens(List<VerificationToken> verificationTokens) {
+        this.verificationTokens = verificationTokens;
+    }
+
+    public Boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     @Override
