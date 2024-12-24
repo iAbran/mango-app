@@ -1,4 +1,4 @@
-package com.motete.mango.ecommerce_backend.api.controller.order;
+package com.motete.mango.ecommerce_backend.api.controller;
 
 import com.motete.mango.ecommerce_backend.model.LocalUser;
 import com.motete.mango.ecommerce_backend.model.WebOrder;

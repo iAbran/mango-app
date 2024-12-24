@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, Long> {
 
-    Optional<VerificationToken> findByToken(String Token);
+    Optional<VerificationToken> findByToken(String token);
+
     void deleteByUser(LocalUser user);
 }

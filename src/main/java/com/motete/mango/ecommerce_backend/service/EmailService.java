@@ -23,15 +23,14 @@ public class EmailService {
         this.javaMailSender = javaMailSender;
     }
 
-    private SimpleMailMessage makeMakeMessage() {
+    private SimpleMailMessage createSimpleMailMessage() {
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setFrom(fromAddress);
-
         return simpleMailMessage;
     }
 
     public void sendVerificationEmail(VerificationToken verificationToken) throws EmailFailureException {
-        SimpleMailMessage message = makeMakeMessage();
+        SimpleMailMessage message = createSimpleMailMessage();
         message.setTo(verificationToken.getUser().getEmail());
         message.setSubject("Verify your email to active your account");
         message.setText("Please follow the link below to verify your email to active your account.\n" +
@@ -40,7 +39,7 @@ public class EmailService {
         try {
             javaMailSender.send(message);
         } catch (MailException e){
-            throw new EmailFailureException();
+            throw new EmailFailureException("Failed to send verification email to '"+ verificationToken.getUser().getEmail()+"'", e);
         }
     }
 }

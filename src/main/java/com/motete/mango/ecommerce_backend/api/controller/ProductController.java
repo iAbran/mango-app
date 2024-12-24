@@ -1,4 +1,4 @@
-package com.motete.mango.ecommerce_backend.api.controller.product;
+package com.motete.mango.ecommerce_backend.api.controller;
 
 import com.motete.mango.ecommerce_backend.model.Product;
 import com.motete.mango.ecommerce_backend.service.ProductService;

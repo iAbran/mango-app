@@ -2,9 +2,7 @@ package com.motete.mango.ecommerce_backend.service;
 
 import com.motete.mango.ecommerce_backend.api.model.LoginBody;
 import com.motete.mango.ecommerce_backend.api.model.RegistrationBody;
-import com.motete.mango.ecommerce_backend.exception.EmailFailureException;
-import com.motete.mango.ecommerce_backend.exception.UserAlreadyExistsException;
-import com.motete.mango.ecommerce_backend.exception.UserNotVerifiedException;
+import com.motete.mango.ecommerce_backend.exception.*;
 import com.motete.mango.ecommerce_backend.model.LocalUser;
 import com.motete.mango.ecommerce_backend.model.VerificationToken;
 import com.motete.mango.ecommerce_backend.repository.LocalUserRepository;
@@ -37,23 +35,26 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    public void registerUser(RegistrationBody registrationBody) throws UserAlreadyExistsException, EmailFailureException {
+    public LocalUser registerUser(RegistrationBody registrationBody) throws EmailFailureException {
         if (userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(
                 registrationBody.getUsername(), registrationBody.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException();
+            throw new UserAlreadyExistsException(
+                    "User with the Email '"+registrationBody.getEmail()+"' or Username '"+registrationBody.getUsername()+"' already exists.");
         }
         LocalUser user = new LocalUser();
-        user.setUsername(registrationBody.getUsername());
         user.setEmail(registrationBody.getEmail());
-        user.setPassword(encryptionService.encryptPassword(registrationBody.getPassword()));
+        user.setUsername(registrationBody.getUsername());
         user.setFirstName(registrationBody.getFirstName());
         user.setLastName(registrationBody.getLastName());
+        user.setPassword(encryptionService.encryptPassword(registrationBody.getPassword()));
 
-        VerificationToken verificationToken = new VerificationToken();
-        emailService.sendVerificationEmail(verificationToken);
-        verificationTokenRepository.save(verificationToken);
-
-        userRepository.save(user);
+        VerificationToken verificationToken = createVerificationToken(user);
+        try {
+            emailService.sendVerificationEmail(verificationToken);
+        } catch (EmailFailureException e) {
+            throw new EmailFailureException("Failed to send verification email to '"+ verificationToken.getUser().getEmail()+"'", e);
+        }
+        return userRepository.save(user);
     }
 
     private VerificationToken createVerificationToken(LocalUser user) {
@@ -87,6 +88,8 @@ public class UserService {
                     throw new UserNotVerifiedException(resent);
                 }
             }
+        } else {
+            throw new UserNotFoundException("User with the Username '"+loginBody.getUsername()+"' is not registered");
         }
         return  null;
     }
@@ -104,9 +107,12 @@ public class UserService {
                 userRepository.save(user);
                 verificationTokenRepository.deleteByUser(user);
                 return true;
+            } else {
+                throw new EmailAlreadyVerifiedException("User with the Email '"+user.getEmail()+"' is already verified");
             }
+        } else {
+            throw new TokenNotFoundException("Token '"+token+"' does not exists");
         }
-        return false;
     }
 
     public List<LocalUser> getAllUsers() {

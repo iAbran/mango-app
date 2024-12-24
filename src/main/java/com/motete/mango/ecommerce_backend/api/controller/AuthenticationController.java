@@ -1,4 +1,4 @@
-package com.motete.mango.ecommerce_backend.api.controller.auth;
+package com.motete.mango.ecommerce_backend.api.controller;
 
 import com.motete.mango.ecommerce_backend.api.model.LoginBody;
 import com.motete.mango.ecommerce_backend.api.model.LoginResponse;
@@ -27,22 +27,21 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody List<RegistrationBody> registrationBodies) {
-        for (RegistrationBody registrationBody : registrationBodies) {
-            try {
-                userService.registerUser(registrationBody);
-            } catch (UserAlreadyExistsException ex) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("User already exists: " + registrationBody.getUsername());
-            } catch (EmailFailureException ex) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
+    public ResponseEntity<String> registerUser(@Valid @RequestBody RegistrationBody registrationBody) throws EmailFailureException {
+        try {
+            userService.registerUser(registrationBody);
+            return ResponseEntity.status(HttpStatus.CREATED).body("User successfully registered");
+        } catch (UserAlreadyExistsException e) {
+            throw new UserAlreadyExistsException(e.getMessage());
+        } catch (EmailFailureException e) {
+            throw new EmailFailureException(e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body("User successfully registered");
     }
 
+
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) {
-        String jwt;
+    public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) throws EmailFailureException {
+        String jwt = null;
         try {
             jwt = userService.loginUser(loginBody);
         } catch (UserNotVerifiedException ex) {
@@ -55,7 +54,7 @@ public class AuthenticationController {
             response.setFailureReason(reason);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (EmailFailureException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            throw new EmailFailureException(e.getMessage());
         }
 
         if (jwt == null) {
