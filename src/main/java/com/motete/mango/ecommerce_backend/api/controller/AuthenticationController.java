@@ -38,7 +38,6 @@ public class AuthenticationController {
         }
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) throws EmailFailureException {
         String jwt = null;
@@ -72,12 +71,12 @@ public class AuthenticationController {
     @PostMapping("/verify")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         if (userService.verifyUser(token)) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body("User successfully verified");
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
-
+    
     @GetMapping("/me")
     public LocalUser getLoggedInUser(@AuthenticationPrincipal LocalUser user) {
         return user;
