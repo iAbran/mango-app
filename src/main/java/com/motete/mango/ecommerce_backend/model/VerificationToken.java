@@ -13,7 +13,7 @@ public class VerificationToken {
     @Column(nullable = false)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(columnDefinition = "TEXT",nullable = false, unique = true)
     private String token;
 
     @Column(nullable = false)
