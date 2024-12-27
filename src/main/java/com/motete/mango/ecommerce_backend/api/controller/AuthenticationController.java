@@ -2,8 +2,10 @@ package com.motete.mango.ecommerce_backend.api.controller;
 
 import com.motete.mango.ecommerce_backend.api.model.LoginBody;
 import com.motete.mango.ecommerce_backend.api.model.LoginResponse;
+import com.motete.mango.ecommerce_backend.api.model.PasswordResetBody;
 import com.motete.mango.ecommerce_backend.api.model.RegistrationBody;
 import com.motete.mango.ecommerce_backend.exception.EmailFailureException;
+import com.motete.mango.ecommerce_backend.exception.EmailNotFoundException;
 import com.motete.mango.ecommerce_backend.exception.UserAlreadyExistsException;
 import com.motete.mango.ecommerce_backend.exception.UserNotVerifiedException;
 import com.motete.mango.ecommerce_backend.model.LocalUser;
@@ -30,7 +32,7 @@ public class AuthenticationController {
     public ResponseEntity<String> registerUser(@Valid @RequestBody RegistrationBody registrationBody) throws EmailFailureException {
         try {
             userService.registerUser(registrationBody);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User successfully registered");
+            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
         } catch (UserAlreadyExistsException e) {
             throw new UserAlreadyExistsException(e.getMessage());
         } catch (EmailFailureException e) {
@@ -71,7 +73,7 @@ public class AuthenticationController {
     @PostMapping("/verify")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         if (userService.verifyUser(token)) {
-            return ResponseEntity.ok().body("User successfully verified");
+            return ResponseEntity.ok().body("User verified successfully");
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
@@ -80,6 +82,24 @@ public class AuthenticationController {
     @GetMapping("/me")
     public LocalUser getLoggedInUser(@AuthenticationPrincipal LocalUser user) {
         return user;
+    }
+
+    @PostMapping("/forgot")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) throws EmailFailureException {
+        try {
+            userService.forgotPassword(email);
+            return ResponseEntity.ok("A link was sent to reset your password to email '"+email+"'");
+        } catch (EmailFailureException e) {
+            throw new EmailFailureException(e.getMessage());
+        } catch (EmailNotFoundException e) {
+            throw new EmailNotFoundException(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody PasswordResetBody body) {
+        userService.resetPassword(body);
+        return ResponseEntity.ok("User password reset successfully");
     }
 
     @GetMapping("/users")

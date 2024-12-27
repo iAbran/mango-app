@@ -1,6 +1,7 @@
 package com.motete.mango.ecommerce_backend.service;
 
 import com.motete.mango.ecommerce_backend.api.model.LoginBody;
+import com.motete.mango.ecommerce_backend.api.model.PasswordResetBody;
 import com.motete.mango.ecommerce_backend.api.model.RegistrationBody;
 import com.motete.mango.ecommerce_backend.exception.*;
 import com.motete.mango.ecommerce_backend.model.LocalUser;
@@ -52,7 +53,7 @@ public class UserService {
         try {
             emailService.sendVerificationEmail(verificationToken);
         } catch (EmailFailureException e) {
-            throw new EmailFailureException("Failed to send verification email to '"+ verificationToken.getUser().getEmail()+"'", e);
+            throw new EmailFailureException(e.getMessage());
         }
         return userRepository.save(user);
     }
@@ -78,8 +79,9 @@ public class UserService {
                 } else {
                     List<VerificationToken> verificationTokens = user.getVerificationTokens();
                     boolean resent = verificationTokens.isEmpty() ||
-                            verificationTokens.getFirst().getCreatedTimestamp().before(new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000)));
-
+                            verificationTokens.getFirst()
+                                    .getCreatedTimestamp()
+                                    .before(new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000)));
                     if (resent) {
                         VerificationToken verificationToken = createVerificationToken(user);
                         verificationTokenRepository.save(verificationToken);
@@ -112,6 +114,27 @@ public class UserService {
             }
         } else {
             throw new TokenNotFoundException("Token '"+token+"' does not exists");
+        }
+    }
+
+    public void forgotPassword(String email) throws EmailFailureException{
+        Optional<LocalUser> userOptional = userRepository.findByEmailIgnoreCase(email);
+        if (userOptional.isPresent()) {
+            LocalUser user = userOptional.get();
+            String token = jwtService.generatePasswordResetJWT(user);
+            emailService.sendPasswordResetEmail(user, token);
+        } else {
+            throw new EmailNotFoundException("Email '"+email+"' does not exists");
+        }
+    }
+
+    public void resetPassword(PasswordResetBody body) {
+        String email = jwtService.getResetPasswordEmail(body.getToken());
+        Optional<LocalUser> userOptional = userRepository.findByEmailIgnoreCase(email);
+        if (userOptional.isPresent()) {
+            LocalUser user = userOptional.get();
+            user.setPassword(encryptionService.encryptPassword(body.getPassword()));
+            userRepository.save(user);
         }
     }
 

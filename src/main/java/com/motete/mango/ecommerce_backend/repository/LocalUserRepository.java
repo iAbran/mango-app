@@ -12,4 +12,5 @@ public interface LocalUserRepository extends JpaRepository<LocalUser, Long> {
 
     Optional<LocalUser> findByUsernameIgnoreCase(String username);
     Optional<LocalUser> findByUsernameIgnoreCaseOrEmailIgnoreCase(String username, String email);
+    Optional<LocalUser> findByEmailIgnoreCase(String email);
 }

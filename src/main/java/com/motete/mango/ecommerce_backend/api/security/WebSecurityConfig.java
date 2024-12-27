@@ -28,6 +28,7 @@ public class WebSecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/product", "/api/auth/register", "/api/auth/login", "/api/auth/verify").permitAll()
+                .requestMatchers("/api/auth/forgot", "/api/auth/reset").permitAll()
                 .anyRequest().authenticated());
 
         return http.build();

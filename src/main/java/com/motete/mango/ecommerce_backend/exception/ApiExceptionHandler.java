@@ -76,4 +76,15 @@ public class ApiExceptionHandler {
         return new ResponseEntity<>(apiException, httpStatus);
     }
 
+    @ExceptionHandler(value = {EmailNotFoundException.class})
+    public ResponseEntity<Object> handleApiException(EmailNotFoundException e) {
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        ApiException apiException = new ApiException(
+                "Email not found: " + e.getMessage(),
+                httpStatus,
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(apiException, httpStatus);
+    }
+
 }
