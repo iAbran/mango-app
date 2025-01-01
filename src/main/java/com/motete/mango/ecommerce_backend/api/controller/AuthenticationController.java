@@ -30,6 +30,7 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody RegistrationBody registrationBody) throws EmailFailureException {
+
         try {
             userService.registerUser(registrationBody);
             return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
@@ -42,6 +43,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) throws EmailFailureException {
+
         String jwt = null;
         try {
             jwt = userService.loginUser(loginBody);
@@ -59,9 +61,7 @@ public class AuthenticationController {
         }
 
         if (jwt == null) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
             LoginResponse response = new LoginResponse();
             response.setJwt(jwt);
@@ -72,6 +72,7 @@ public class AuthenticationController {
 
     @PostMapping("/verify")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+
         if (userService.verifyUser(token)) {
             return ResponseEntity.ok().body("User verified successfully");
         } else {
@@ -81,11 +82,13 @@ public class AuthenticationController {
     
     @GetMapping("/me")
     public LocalUser getLoggedInUser(@AuthenticationPrincipal LocalUser user) {
+
         return user;
     }
 
     @PostMapping("/forgot")
     public ResponseEntity<String> forgotPassword(@RequestParam String email) throws EmailFailureException {
+
         try {
             userService.forgotPassword(email);
             return ResponseEntity.ok("A link was sent to reset your password to email '"+email+"'");
@@ -98,12 +101,14 @@ public class AuthenticationController {
 
     @PostMapping("/reset")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody PasswordResetBody body) {
+
         userService.resetPassword(body);
         return ResponseEntity.ok("User password reset successfully");
     }
 
     @GetMapping("/users")
     public List<LocalUser> getAllUsers() {
+
         return userService.getAllUsers();
     }
 }

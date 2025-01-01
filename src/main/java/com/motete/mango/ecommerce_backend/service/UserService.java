@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -29,6 +30,7 @@ public class UserService {
                        EncryptionService encryptionService,
                        JWTService jwtService,
                        EmailService emailService) {
+
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.encryptionService = encryptionService;
@@ -37,6 +39,7 @@ public class UserService {
     }
 
     public LocalUser registerUser(RegistrationBody registrationBody) throws EmailFailureException {
+
         if (userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(
                 registrationBody.getUsername(), registrationBody.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException(
@@ -59,6 +62,7 @@ public class UserService {
     }
 
     private VerificationToken createVerificationToken(LocalUser user) {
+
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setToken(jwtService.generateVerificationJWT(user));
         verificationToken.setCreatedTimestamp(new Timestamp(System.currentTimeMillis()));
@@ -69,6 +73,7 @@ public class UserService {
     }
 
     public String loginUser(LoginBody loginBody) throws UserNotVerifiedException, EmailFailureException {
+
         Optional<LocalUser> userOptional = userRepository.findByUsernameIgnoreCase(loginBody.getUsername());
 
         if (userOptional.isPresent()) {
@@ -98,6 +103,7 @@ public class UserService {
 
     @Transactional
     public boolean verifyUser(String token) {
+
         Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
 
         if (tokenOptional.isPresent()) {
@@ -118,6 +124,7 @@ public class UserService {
     }
 
     public void forgotPassword(String email) throws EmailFailureException{
+
         Optional<LocalUser> userOptional = userRepository.findByEmailIgnoreCase(email);
         if (userOptional.isPresent()) {
             LocalUser user = userOptional.get();
@@ -129,6 +136,7 @@ public class UserService {
     }
 
     public void resetPassword(PasswordResetBody body) {
+
         String email = jwtService.getResetPasswordEmail(body.getToken());
         Optional<LocalUser> userOptional = userRepository.findByEmailIgnoreCase(email);
         if (userOptional.isPresent()) {
@@ -136,6 +144,11 @@ public class UserService {
             user.setPassword(encryptionService.encryptPassword(body.getPassword()));
             userRepository.save(user);
         }
+    }
+
+    public boolean userHasPermissionToUser(LocalUser user, Long id) {
+
+        return Objects.equals(user.getId(), id);
     }
 
     public List<LocalUser> getAllUsers() {

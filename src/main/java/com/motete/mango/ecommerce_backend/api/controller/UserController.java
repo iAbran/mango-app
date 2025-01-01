@@ -1,10 +1,13 @@
 package com.motete.mango.ecommerce_backend.api.controller;
 
 import com.motete.mango.ecommerce_backend.model.Address;
+import com.motete.mango.ecommerce_backend.model.DataChange;
 import com.motete.mango.ecommerce_backend.model.LocalUser;
 import com.motete.mango.ecommerce_backend.repository.AddressRepository;
+import com.motete.mango.ecommerce_backend.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,15 +20,22 @@ import java.util.Optional;
 public class UserController {
 
     private final AddressRepository addressRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final UserService userService;
 
-    public UserController(AddressRepository addressRepository) {
+    public UserController(AddressRepository addressRepository, SimpMessagingTemplate simpMessagingTemplate,
+                          UserService userService) {
+
         this.addressRepository = addressRepository;
+        this.simpMessagingTemplate = simpMessagingTemplate;
+        this.userService = userService;
     }
 
     @GetMapping("/{userId}/address")
     public ResponseEntity<List<Address>> getAddress(@AuthenticationPrincipal LocalUser user,
                                                     @PathVariable Long userId) {
-        if (!userHasPermission(user, userId)) {
+
+        if (!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(addressRepository.findByUser_id(userId));
@@ -33,17 +43,20 @@ public class UserController {
 
     @PutMapping("/{userId}/address")
     public ResponseEntity<Address> putAddress(@AuthenticationPrincipal LocalUser user,
-                                              @PathVariable Long userId,
-                                              @RequestBody Address address) {
-        if (!userHasPermission(user, userId)) {
+                                              @PathVariable Long userId, @RequestBody Address address) {
+
+        if (!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         address.setId(null);
         LocalUser refUser = new LocalUser();
         refUser.setId(userId);
         address.setUser(refUser);
+        Address savedAddress = addressRepository.save(address);
+        simpMessagingTemplate.convertAndSend("/topic/user/"+userId+"/address",
+                new DataChange<>(DataChange.ChangeType.INSERT, address));
 
-        return  ResponseEntity.ok(addressRepository.save(address));
+        return  ResponseEntity.ok(savedAddress);
     }
 
     @PatchMapping("/{userId}/address/{addressId}")
@@ -51,7 +64,8 @@ public class UserController {
                                                 @PathVariable Long userId,
                                                 @PathVariable Long addressId,
                                                 @RequestBody Address address) {
-        if (!userHasPermission(user, userId)) {
+
+        if (!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (Objects.equals(address.getId(), addressId)) {
@@ -62,16 +76,15 @@ public class UserController {
 
                 if (Objects.equals(originalUser.getId(), userId)) {
                     address.setUser(originalUser);
+                    Address savedAddress = addressRepository.save(address);
+                    simpMessagingTemplate.convertAndSend("/topic/user/"+userId+"/address",
+                            new DataChange<>(DataChange.ChangeType.UPDATE, address));
 
-                    return ResponseEntity.ok(addressRepository.save(address));
+                    return  ResponseEntity.ok(savedAddress);
                 }
             }
         }
         return ResponseEntity.badRequest().build();
-    }
-
-    private boolean userHasPermission(LocalUser user, Long id) {
-        return Objects.equals(user.getId(), id);
     }
 
 }

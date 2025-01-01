@@ -25,10 +25,10 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.addFilterBefore(jwtRequestFilter, AuthorizationFilter.class);
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        http.cors(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/product", "/api/auth/register", "/api/auth/login", "/api/auth/verify").permitAll()
-                .requestMatchers("/api/auth/forgot", "/api/auth/reset").permitAll()
+                .requestMatchers("/api/auth/forgot", "/api/auth/reset", "/websocket", "/websocket/**").permitAll()
                 .anyRequest().authenticated());
 
         return http.build();
